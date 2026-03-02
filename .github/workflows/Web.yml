@@ -12,14 +12,14 @@ name: Build and deploy Web App
 
 env:
   AZURE_WEBAPP_NAME: WEBVehiculosGravyn    # Change this to your Azure Web App name
-  AZURE_WEBAPP_PACKAGE_PATH: './Vehiculo.Web/Vehiculo.Web/Web'
+  AZURE_WEBAPP_PACKAGE_PATH: './Vehiculo.Web/Vehiculo.Web'
   DOTNET_VERSION: '8.0'
 
 on:
   push:
     branches: [ "main" ]
     paths:
-      - 'Vehiculo.Web/Vehiculo.Web/Web/**'
+      - 'Vehiculo.Web/Vehiculo.Web/**'
   workflow_dispatch:
 
 permissions:
@@ -50,9 +50,9 @@ jobs:
 
       - name: Build with dotnet
         run: |
-          dotnet build "Vehiculo.Web/Vehiculo.Web/Abstracciones/Abstracciones/*.csproj" --configuration Release --no-restore
-          dotnet build "Vehiculo.Web/Vehiculo.Web/Reglas/Reglas/*.csproj" --configuration Release --no-restore
-          dotnet build "Vehiculo.Web/Vehiculo.Web/Web/*.csproj" --configuration Release --no-restore
+          dotnet build "Vehiculo.Web/Vehiculo.Web/Abstracciones/Abstracciones.csproj" --configuration Release --no-restore
+          dotnet build "Vehiculo.Web/Vehiculo.Web/Reglas/Reglas.csproj" --configuration Release --no-restore
+          dotnet build "Vehiculo.Web/Vehiculo.Web/Web/Web.csproj" --configuration Release --no-restore
 
       - name: Run tests
         run: dotnet test "Vehiculo.Web/Vehiculo.Web/Vehiculo.Web.slnx" --no-restore --verbosity normal --configuration Release || echo "No tests found or test execution failed"
@@ -89,3 +89,4 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
           respect-funcignore: true
+
