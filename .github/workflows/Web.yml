@@ -50,7 +50,7 @@ jobs:
 
       - name: Build with dotnet
         run: |
-          dotnet build "Vehiculo.Web/Vehiculo.Web/Abstracciones/*.csproj" --configuration Release --no-restore
+          dotnet build "Vehiculo.Web/Vehiculo.Web/Abstracciones/Abstracciones/*.csproj" --configuration Release --no-restore
           dotnet build "Vehiculo.Web/Vehiculo.Web/Reglas/Reglas/*.csproj" --configuration Release --no-restore
           dotnet build "Vehiculo.Web/Vehiculo.Web/Web/*.csproj" --configuration Release --no-restore
 
