@@ -1,5 +1,6 @@
 using Abstracciones.Interfaces.Reglas;
 using Abstracciones.Modelos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,86 +9,73 @@ using System.Text.Json;
 
 namespace Web.Pages.Vehiculos
 {
+
     public class EditarModel : PageModel
     {
-        private readonly IConfiguracion _configuracion;
-
+        private IConfiguracion _configuracion;
+        [BindProperty]
+        public VehiculoResponse vehiculo { get; set; } = default!;
+        public VehiculoRequest vehiculoRequest { get; set; } = default!;
+        [BindProperty]
+        public List<SelectListItem> marcas { get; set; } = default!;
+        [BindProperty]
+        public List<SelectListItem> modelos { get; set; } = default!;
+        [BindProperty]
+        public Guid marcaSeleccionada { get; set; } = default!;
+        [BindProperty]
+        public Guid modeloSeleccionado { get; set; } = default!;
         public EditarModel(IConfiguracion configuracion)
         {
             _configuracion = configuracion;
         }
-
-        [BindProperty]
-        public VehiculoResponse vehiculoResponse { get; set; }
-        [BindProperty]
-        public List<SelectListItem> marcas { get; set; }
-        [BindProperty]
-        public List<SelectListItem> modelos { get; set; }
-        [BindProperty]
-        public Guid marcaseleccionada { get; set; }
-        [BindProperty]
-        public Guid modeloseleccionado { get; set; }
-
         public async Task<ActionResult> OnGet(Guid? id)
         {
             if (id == null)
                 return NotFound();
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerVehiculo");
             var cliente = new HttpClient();
+            
             var solicitud = new HttpRequestMessage(HttpMethod.Get, string.Format(endpoint, id));
-
             var respuesta = await cliente.SendAsync(solicitud);
             respuesta.EnsureSuccessStatusCode();
             if (respuesta.StatusCode == HttpStatusCode.OK)
             {
-                await ObtenerMarcas();
+                await ObtenerMarcasAsync();
                 var resultado = await respuesta.Content.ReadAsStringAsync();
-                var opciones = new System.Text.Json.JsonSerializerOptions
+                var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                vehiculo = JsonSerializer.Deserialize<VehiculoResponse>(resultado, opciones);
+                if (vehiculo != null)
                 {
-                    PropertyNameCaseInsensitive = true
-                };
-                vehiculoResponse = JsonSerializer.Deserialize<VehiculoResponse>(resultado, opciones);
-                if (vehiculoResponse != null) {
-                    marcaseleccionada = Guid.Parse(marcas.Where(m => m.Text == vehiculoResponse.Marca).FirstOrDefault().Value);
-                    modelos = (await ObtenerModelos(marcaseleccionada)).Select(m=>
-                    new SelectListItem { 
-                    Value =m.Id.ToString(),
-                    Text =m.Nombre,
-                    Selected = m.Nombre == vehiculoResponse.Modelo
-                    }
-                    ).ToList();
-                    modeloseleccionado= Guid.Parse(modelos.Where(m => m.Text == vehiculoResponse.Modelo).FirstOrDefault().Value);
+                    marcaSeleccionada = Guid.Parse(marcas.Where(m => m.Text == vehiculo.Marca).FirstOrDefault().Value);                    
+                    modelos = (await ObtenerModelosAsync(marcaSeleccionada)).Select(a =>
+                        new SelectListItem
+                        {
+                            Value = a.Id.ToString(),
+                            Text = a.Nombre.ToString(),
+                            Selected = a.Nombre == vehiculo.Modelo
+                        }).ToList();
+                    modeloSeleccionado = Guid.Parse(modelos.Where(m => m.Text == vehiculo.Modelo).FirstOrDefault().Value);
                 }
-                    
+
             }
             return Page();
         }
-
         public async Task<ActionResult> OnPost()
         {
+            if (vehiculo.Id == Guid.Empty)
+                return NotFound();
 
             if (!ModelState.IsValid)
                 return Page();
 
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "EditarVehiculo");
             var cliente = new HttpClient();
-            var respuesta = await cliente.PutAsJsonAsync<VehiculoRequest>(string.Format(endpoint, vehiculoResponse.Id), new VehiculoRequest
-            {
-                Placa = vehiculoResponse.Placa,
-                IdModelo = modeloseleccionado,
-                Anio= vehiculoResponse.Anio,
-                Color= vehiculoResponse.Color,
-                Precio= vehiculoResponse.Precio,
-                CorreoPropietario= vehiculoResponse.CorreoPropietario,
-                TelefonoPropietario= vehiculoResponse.TelefonoPropietario
-            });
-
+            
+            var respuesta = await cliente.PutAsJsonAsync<VehiculoRequest>(string.Format(endpoint, vehiculo.Id.ToString()),new VehiculoRequest { IdModelo=modeloSeleccionado, Anio=vehiculo.Anio, Color=vehiculo.Color, CorreoPropietario=vehiculo.CorreoPropietario, Placa=vehiculo.Placa, Precio=vehiculo.Precio, TelefonoPropietario=vehiculo.TelefonoPropietario });
             respuesta.EnsureSuccessStatusCode();
             return RedirectToPage("./Index");
         }
-
-
-        private async Task ObtenerMarcas()
+        private async Task ObtenerMarcasAsync()
         {
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerMarcas");
             var cliente = new HttpClient();
@@ -95,47 +83,40 @@ namespace Web.Pages.Vehiculos
 
             var respuesta = await cliente.SendAsync(solicitud);
             respuesta.EnsureSuccessStatusCode();
-            var resultado = await respuesta.Content.ReadAsStringAsync();
-            var opciones = new System.Text.Json.JsonSerializerOptions
+            if (respuesta.StatusCode == HttpStatusCode.OK)
             {
-                PropertyNameCaseInsensitive = true
-            };
-            var resultadodeserializado = JsonSerializer.Deserialize<IList<Marca>>(resultado, opciones);
-            marcas = resultadodeserializado.Select(m =>
-            new SelectListItem
-            {
-                Value = m.Id.ToString(),
-                Text = m.Nombre.ToString(),
+                var resultado = await respuesta.Content.ReadAsStringAsync();
+                var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var resultadoDeserializado = JsonSerializer.Deserialize<List<Marca>>(resultado, opciones);
+                marcas = resultadoDeserializado.Select(a =>
+                                  new SelectListItem
+                                  {
+                                      Value = a.Id.ToString(),
+                                      Text = a.Nombre.ToString()
+                                  }).ToList();
             }
-            ).ToList();
+        }
+        public async Task<JsonResult> OnGetObtenerModelos(Guid marcaId)
+        {
+            var modelos = await ObtenerModelosAsync(marcaId);
+            return new JsonResult(modelos);
         }
 
-
-        private async Task<List<Modelo>> ObtenerModelos(Guid marcaID)
+        private async Task<List<Modelo>> ObtenerModelosAsync(Guid marcaId)
         {
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerModelos");
             var cliente = new HttpClient();
-            var solicitud = new HttpRequestMessage(HttpMethod.Get, string.Format(endpoint, marcaID));
+            var solicitud = new HttpRequestMessage(HttpMethod.Get, string.Format(endpoint, marcaId));
 
             var respuesta = await cliente.SendAsync(solicitud);
             respuesta.EnsureSuccessStatusCode();
             if (respuesta.StatusCode == HttpStatusCode.OK)
             {
                 var resultado = await respuesta.Content.ReadAsStringAsync();
-                var opciones = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
+                var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 return JsonSerializer.Deserialize<List<Modelo>>(resultado, opciones);
             }
-
-                    return new List<Modelo>();
-        }
-
-        public  async Task<JsonResult> OnGetObtenerModelos(Guid marcaID)
-        {
-            var modelos = await ObtenerModelos(marcaID);
-            return new JsonResult(modelos);
+            return new List<Modelo>();
         }
     }
 }

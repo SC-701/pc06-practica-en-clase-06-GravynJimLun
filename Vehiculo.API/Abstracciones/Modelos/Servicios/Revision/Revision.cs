@@ -1,6 +1,4 @@
-﻿using Abstracciones.Modelos.Servicios.Revision;
-
-namespace Abstracciones.Modelos.Servicios.Registro
+﻿namespace Abstracciones.Modelos.Servicios.Registro
 {
     public class Revision
     {

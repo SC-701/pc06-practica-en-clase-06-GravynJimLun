@@ -1,13 +1,11 @@
-
-
 using Abstracciones.Interfaces.DA;
-using Abstracciones.Interfaces.DA.Repositorios;
 using Abstracciones.Interfaces.Flujo;
-using Abstracciones.Interfaces.Reglas;
-using Abstracciones.Interfaces.Servicios;
-using DA;
 using Flujo;
+using DA;
+using DA.Repositorios;
+using Abstracciones.Interfaces.Reglas;
 using Reglas;
+using Abstracciones.Interfaces.Servicios;
 using Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,13 +20,18 @@ builder.Services.AddHttpClient();
 
 
 builder.Services.AddScoped<IVehiculoFlujo, VehiculoFlujo>();
+builder.Services.AddScoped<IMarcaFlujo, MarcaFlujo>();
+builder.Services.AddScoped<IModeloFlujo, ModeloFlujo>();
 builder.Services.AddScoped<IVehiculoDA, VehiculoDA>();
+builder.Services.AddScoped<IMarcaDA, MarcaDA>();
+builder.Services.AddScoped<IModeloDA, ModeloDA>();
 builder.Services.AddScoped<IRepositorioDapper, RepositorioDapper>();
 builder.Services.AddScoped<IRegistroServicio, RegistroServicio>();
 builder.Services.AddScoped<IRevisionServicio, RevisionServicio>();
-builder.Services.AddScoped<IRevisionReglas, RevisionReglas>();
 builder.Services.AddScoped<IRegistroReglas, RegistroReglas>();
+builder.Services.AddScoped<IRevisionReglas, RevisionReglas>();
 builder.Services.AddScoped<IConfiguracion, Configuracion>();
+
 
 
 var app = builder.Build();

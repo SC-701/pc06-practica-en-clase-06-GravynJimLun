@@ -1,4 +1,4 @@
-﻿namespace Abstracciones.Modelos.Servicios.Revision
+﻿namespace Abstracciones.Modelos.Servicios.Registro
 {
     public class Falta
     {

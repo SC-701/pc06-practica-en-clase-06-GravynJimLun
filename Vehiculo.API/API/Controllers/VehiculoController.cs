@@ -44,7 +44,8 @@ namespace API.Controllers
             var resultado = await _vehiculoFlujo.Eliminar(Id);
             return NoContent();
         }
-        [HttpGet("/ObtenerVehiculos")]
+
+        [HttpGet]
         public async Task<IActionResult> Obtener()
         {
             var resultado = await _vehiculoFlujo.Obtener();
@@ -52,11 +53,10 @@ namespace API.Controllers
                 return NoContent();
             return Ok(resultado);
         }
-        [HttpGet]
-        public async Task<IActionResult> Obtener([FromQuery] Guid Id)
+        [HttpGet("{Id}")]
+        public async Task<IActionResult> Obtener([FromRoute] Guid Id)
         {
             var resultado = await _vehiculoFlujo.Obtener(Id);
-
             return Ok(resultado);
         }
         #endregion
